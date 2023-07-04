@@ -16,3 +16,8 @@ if(EPOLL)
 endif()
 
 target_link_libraries(unit-test-runner PUBLIC httpsrv)
+
+add_custom_command(TARGET unit-test-runner POST_BUILD
+                   COMMAND ${CMAKE_COMMAND} -E copy
+                   ${CMAKE_SOURCE_DIR}/test/unit/read_socket.txt
+                   ${CMAKE_CURRENT_BINARY_DIR}/read_socket.txt)
