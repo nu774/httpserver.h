@@ -158,11 +158,11 @@ void _http_perform_response(http_request_t *request, http_response_t *response,
     header = tmp->next;
     free(tmp);
   }
-  _hs_buffer_free(&request->buffer, &request->server->memused);
+  _hs_buffer_free(&request->obuffer, &request->server->memused);
   free(response);
-  request->buffer.buf = printctx->buf;
-  request->buffer.length = printctx->size;
-  request->buffer.capacity = printctx->capacity;
+  request->obuffer.buf = printctx->buf;
+  request->obuffer.length = printctx->size;
+  request->obuffer.capacity = printctx->capacity;
   request->bytes_written = 0;
   request->state = HTTP_SESSION_WRITE;
   http_write(request);
@@ -205,7 +205,7 @@ void hs_request_respond_chunk(http_request_t *request,
     hs_response_set_header(response, "Transfer-Encoding", "chunked");
     _http_serialize_headers(request, response, &printctx);
   }
-  request->chunk_cb = cb;
+  request->ochunk_cb = cb;
   _grwprintf(&printctx, "%X\r\n", response->content_length);
   _grwmemcpy(&printctx, response->body, response->content_length);
   _grwprintf(&printctx, "\r\n");

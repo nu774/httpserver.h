@@ -73,6 +73,7 @@ void hs_request_terminate_connection(http_request_t *request) {
   _hs_delete_events(request);
   close(request->socket);
   _hs_buffer_free(&request->buffer, &request->server->memused);
+  _hs_buffer_free(&request->obuffer, &request->server->memused);
   free(request->tokens.buf);
   request->tokens.buf = NULL;
   free(request);
@@ -97,6 +98,7 @@ http_request_t *_hs_request_init(int sock, http_server_t *server,
   request->flags = HTTP_AUTOMATIC;
   request->parser = (struct hsh_parser_s){};
   request->buffer = (struct hsh_buffer_s){};
+  request->obuffer = (struct hsh_buffer_s){};
   request->tokens.buf = NULL;
   _hs_token_array_init(&request->tokens, 32);
   return request;

@@ -53,7 +53,7 @@ void _hs_write_socket_and_handle_return_code(http_request_t *request) {
                                                : HTTP_REQUEST_TIMEOUT;
 
   if (rc != HS_WRITE_RC_CONTINUE)
-    _hs_buffer_free(&request->buffer, &request->server->memused);
+    _hs_buffer_free(&request->obuffer, &request->server->memused);
 
   switch (rc) {
   case HS_WRITE_RC_SUCCESS_CLOSE:
@@ -65,12 +65,13 @@ void _hs_write_socket_and_handle_return_code(http_request_t *request) {
     // Response complete, keep-alive connection
     if (request->end_cb)
       request->end_cb(request);
+    _hs_buffer_free(&request->buffer, &request->server->memused);
     hs_request_begin_read(request);
     break;
   case HS_WRITE_RC_SUCCESS_CHUNK:
     // Finished writing chunk, request next
     request->state = HTTP_SESSION_NOP;
-    request->chunk_cb(request);
+    request->ochunk_cb(request);
     break;
   case HS_WRITE_RC_SUCCESS_STATUS_LINE:
     request->state = HTTP_SESSION_NOP;

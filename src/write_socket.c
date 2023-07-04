@@ -15,12 +15,12 @@ ssize_t hs_test_write(int fd, char const *data, size_t size);
 //
 // Runs when we get a socket ready to write event or when initiating an HTTP
 // response and writing to the socket for the first time. If the response is
-// chunked the chunk_cb callback will be invoked signalling to the user code
+// chunked the ochunk_cb callback will be invoked signalling to the user code
 // that another chunk is ready to be written.
 enum hs_write_rc_e hs_write_socket(http_request_t *request) {
   int bytes =
-      write(request->socket, request->buffer.buf + request->bytes_written,
-            request->buffer.length - request->bytes_written);
+      write(request->socket, request->obuffer.buf + request->bytes_written,
+            request->obuffer.length - request->bytes_written);
   if (bytes > 0)
     request->bytes_written += bytes;
 
@@ -29,7 +29,7 @@ enum hs_write_rc_e hs_write_socket(http_request_t *request) {
   if (errno == EPIPE) {
     rc = HS_WRITE_RC_SOCKET_ERR;
   } else {
-    if (request->bytes_written != request->buffer.length) {
+    if (request->bytes_written != request->obuffer.length) {
       // All bytes of the body were not written and we need to wait until the
       // socket is writable again to complete the write
       rc = HS_WRITE_RC_CONTINUE;
