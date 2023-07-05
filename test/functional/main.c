@@ -116,15 +116,17 @@ struct http_server_s* server;
 
 void handle_sigterm(int signum) {
   (void)signum;
-  free(server);
-  free(poll_server);
-  exit(0);
+  close(http_server_loop(server));
+  close(http_server_loop(poll_server));
 }
 
 int main() {
+  signal(SIGINT, handle_sigterm);
   signal(SIGTERM, handle_sigterm);
   server = http_server_init(8080, handle_request);
   poll_server = http_server_init(8081, handle_request);
   http_server_listen_poll(poll_server);
   http_server_listen(server);
+  free(server);
+  free(poll_server);
 }
