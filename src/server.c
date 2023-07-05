@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <sys/socket.h>
 #include <time.h>
+#include <errno.h>
 
 #ifdef EPOLL
 #include <sys/epoll.h>
@@ -108,6 +109,9 @@ int hs_server_run_event_loop(http_server_t *serv, const char *ipaddr) {
   struct epoll_event ev_list[1];
   while (1) {
     int nev = epoll_wait(serv->loop, ev_list, 1, -1);
+    if (nev < 0 && errno != EINTR) {
+      break;
+    }
     for (int i = 0; i < nev; i++) {
       ev_cb_t *ev_cb = (ev_cb_t *)ev_list[i].data.ptr;
       ev_cb->handler(&ev_list[i]);
