@@ -256,3 +256,11 @@ void hs_request_respond_error(http_request_t *request, int code,
   hs_response_set_body(response, message, strlen(message));
   hs_request_respond(request, response, http_write);
 }
+
+void hs_request_respond_status_line(http_request_t *request, int code,
+                                     hs_req_fn_t http_write) {
+  grwprintf_t printctx;
+  _grwprintf_init(&printctx, HTTP_RESPONSE_BUF_SIZE, &request->server->memused);
+  _grwprintf(&printctx, "HTTP/1.1 %d %s\r\n\r\n", code, hs_status_text[code]);
+  _http_perform_response(request, hs_response_init(), &printctx, http_write);
+}

@@ -33,6 +33,9 @@ enum hs_write_rc_e hs_write_socket(http_request_t *request) {
       // All bytes of the body were not written and we need to wait until the
       // socket is writable again to complete the write
       rc = HS_WRITE_RC_CONTINUE;
+    } else if (HTTP_FLAG_CHECK(request->flags, HTTP_EARLY_STATUS_LINE)) {
+      HTTP_FLAG_CLEAR(request->flags, HTTP_EARLY_STATUS_LINE);
+      rc = HS_WRITE_RC_SUCCESS_STATUS_LINE;
     } else if (HTTP_FLAG_CHECK(request->flags, HTTP_CHUNKED_RESPONSE)) {
       // All bytes of the chunk were written and we need to get the next chunk
       // from the application.

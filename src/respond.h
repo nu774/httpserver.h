@@ -48,4 +48,6 @@ void hs_request_respond_chunk_end(struct http_request_s *request,
 void hs_request_respond_error(struct http_request_s *request, int code,
                               char const *message, hs_req_fn_t http_write);
 
+void hs_request_respond_status_line(struct http_request_s *request,
+                                    int code, hs_req_fn_t http_write);
 #endif

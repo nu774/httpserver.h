@@ -16,7 +16,9 @@ enum hs_write_rc_e {
   // Successful but has not written the full response, wait for write ready
   HS_WRITE_RC_CONTINUE,
   // Error writing to the socket
-  HS_WRITE_RC_SOCKET_ERR
+  HS_WRITE_RC_SOCKET_ERR,
+  // Successful and has written the full status line
+  HS_WRITE_RC_SUCCESS_STATUS_LINE,
 };
 
 enum hs_write_rc_e hs_write_socket(struct http_request_s *request);

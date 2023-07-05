@@ -70,6 +70,10 @@ void _hs_write_socket_and_handle_return_code(http_request_t *request) {
     request->state = HTTP_SESSION_NOP;
     request->chunk_cb(request);
     break;
+  case HS_WRITE_RC_SUCCESS_STATUS_LINE:
+    request->state = HTTP_SESSION_NOP;
+    request->server->request_handler(request);
+    break;
   case HS_WRITE_RC_CONTINUE:
     break;
   }

@@ -7,6 +7,9 @@
 #include "common.h"
 #include "parser.h"
 #include "read_socket.h"
+#include "request_util.h"
+#include "io_events.h"
+#include "respond.h"
 #endif
 
 void _hs_token_array_push(struct hs_token_array_s *array,
@@ -83,7 +86,13 @@ _hs_parse_buffer_and_exec_user_cb(http_request_t *request,
       if (HTTP_FLAG_CHECK(token.flags, HSH_TOK_FLAG_STREAMED_BODY) ||
           HTTP_FLAG_CHECK(token.flags, HSH_TOK_FLAG_NO_BODY)) {
         HTTP_FLAG_SET(request->flags, HTTP_FLG_STREAMED);
-        _hs_exec_callback(request, request->server->request_handler);
+        http_string_t val = hs_request_header(request, "Expect");
+        if (val.len == strlen("100-continue") && memcmp(val.buf, "100-continue", val.len) == 0) {
+          HTTP_FLAG_SET(request->flags, HTTP_EARLY_STATUS_LINE);
+          hs_request_respond_status_line(request, 100, hs_request_begin_write);
+        } else {
+          _hs_exec_callback(request, request->server->request_handler);
+        }
         return rc;
       }
       break;
