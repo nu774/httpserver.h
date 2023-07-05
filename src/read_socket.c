@@ -73,12 +73,12 @@ void _hs_exec_callback(http_request_t *request,
 
 enum hs_read_rc_e
 _hs_parse_buffer_and_exec_user_cb(http_request_t *request,
-                                  int max_request_buf_capacity) {
+                                  int max_request_buf_capacity __attribute__ ((unused))) {
   enum hs_read_rc_e rc = HS_READ_RC_SUCCESS;
 
   do {
     struct hsh_token_s token = hsh_parser_exec(
-        &request->parser, &request->buffer, max_request_buf_capacity);
+        &request->parser, &request->buffer, 0);
 
     switch (token.type) {
     case HSH_TOK_HEADERS_DONE:
