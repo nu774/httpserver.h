@@ -32,24 +32,39 @@ void chunk_cb(struct http_request_s* request) {
   }
 }
 
-typedef struct {
-  char* buf;
-  struct http_response_s* response;
-  int index;
-} chunk_buf_t;
+void chunked_echo_write_cb(struct http_request_s* request);
 
-void chunk_req_cb(struct http_request_s* request) {
+void chunked_echo_cb_1(struct http_request_s* request) {
   http_string_t str = http_request_chunk(request);
-  chunk_buf_t* chunk_buffer = (chunk_buf_t*)http_request_userdata(request);
+  struct http_response_s* response = http_response_init();
   if (str.len > 0) {
-    memcpy(chunk_buffer->buf + chunk_buffer->index, str.buf, str.len);
-    chunk_buffer->index += str.len;
-    http_request_read_chunk(request, chunk_req_cb);
+    http_response_body(response, str.buf, str.len);
+    http_respond_chunk(request, response, chunked_echo_write_cb);
   } else {
-    http_response_body(chunk_buffer->response, chunk_buffer->buf, chunk_buffer->index);
-    http_respond(request, chunk_buffer->response);
-    free(chunk_buffer->buf);
-    free(chunk_buffer);
+    http_respond_chunk_end(request, response);
+  }
+}
+
+void chunked_echo_write_cb(struct http_request_s* request) {
+  http_request_read_chunk(request, chunked_echo_cb_1);
+}
+
+void chunked_echo_cb(struct http_request_s* request) {
+  http_string_t str = http_request_chunk(request);
+  struct http_response_s* response = http_response_init();
+  http_string_t content_type = http_request_header(request, "Content-Type");
+  if (content_type.len > 0) {
+    char buf[256];
+    snprintf(buf, sizeof buf, "%.*s", content_type.len, content_type.buf);
+    http_response_header(response, "Content-Type", buf);
+  } else {
+    http_response_header(response, "Content-Type", "application/octet-stream");
+  }
+  if (str.len > 0) {
+    http_response_body(response, str.buf, str.len);
+    http_respond_chunk(request, response, chunked_echo_write_cb);
+  } else {
+    http_respond(request, response);
   }
 }
 
@@ -60,10 +75,11 @@ void handle_request(struct http_request_s* request) {
   http_request_connection(request, HTTP_AUTOMATIC);
   struct http_response_s* response = http_response_init();
   http_response_status(response, 200);
-  if (request_target_is(request, "/echo")) {
-    http_string_t body = http_request_body(request);
-    http_response_header(response, "Content-Type", "text/plain");
-    http_response_body(response, body.buf, body.len);
+  if (request_target_is(request, "/echo")
+   || request_target_is(request, "/chunked-req")
+   || request_target_is(request, "/large")) {
+    http_request_read_chunk(request, chunked_echo_cb);
+    return;
   } else if (request_target_is(request, "/host")) {
     http_string_t ua = http_request_header(request, "Host");
     http_response_header(response, "Content-Type", "text/plain");
@@ -78,20 +94,6 @@ void handle_request(struct http_request_s* request) {
     http_response_header(response, "Content-Type", "text/plain");
     http_response_body(response, RESPONSE, sizeof(RESPONSE) - 1);
     http_respond_chunk(request, response, chunk_cb);
-    return;
-  } else if (request_target_is(request, "/chunked-req")) {
-    chunk_buf_t* chunk_buffer = (chunk_buf_t*)calloc(1, sizeof(chunk_buf_t));
-    chunk_buffer->buf = (char*)malloc(512 * 1024);
-    chunk_buffer->response = response;
-    http_request_set_userdata(request, chunk_buffer);
-    http_request_read_chunk(request, chunk_req_cb);
-    return;
-  } else if (request_target_is(request, "/large")) {
-    chunk_buf_t* chunk_buffer = (chunk_buf_t*)calloc(1, sizeof(chunk_buf_t));
-    chunk_buffer->buf = (char*)malloc(25165824);
-    chunk_buffer->response = response;
-    http_request_set_userdata(request, chunk_buffer);
-    http_request_read_chunk(request, chunk_req_cb);
     return;
   } else if (request_target_is(request, "/headers")) {
     int iter = 0, i = 0;
