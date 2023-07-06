@@ -17,6 +17,8 @@
 #include "respond.h"
 #include "server.h"
 #include "write_socket.h"
+#include "parser.h"
+#include "request_util.h"
 #endif
 
 void _hs_read_socket_and_handle_return_code(http_request_t *request) {
@@ -65,8 +67,13 @@ void _hs_write_socket_and_handle_return_code(http_request_t *request) {
     // Response complete, keep-alive connection
     if (request->end_cb)
       request->end_cb(request);
-    _hs_buffer_free(&request->buffer, &request->server->memused);
-    hs_request_begin_read(request);
+    if (hsh_parser_done(&request->parser)) {
+      _hs_buffer_free(&request->buffer, &request->server->memused);
+      hs_request_begin_read(request);
+    } else {
+      HTTP_FLAG_SET(request->flags, HTTP_DISCARD_REMAINING_BODY);
+      hs_request_begin_read(request);
+    }
     break;
   case HS_WRITE_RC_SUCCESS_CHUNK:
     // Finished writing chunk, request next

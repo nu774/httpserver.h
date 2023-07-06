@@ -275,3 +275,8 @@ struct hsh_token_s hsh_parser_exec(struct hsh_parser_s* parser, struct hsh_buffe
     return none;
   }
 }
+
+int hsh_parser_done(struct hsh_parser_s *parser) {
+  return HTTP_FLAG_CHECK(parser->flags, HSH_P_FLAG_DONE);
+}
+

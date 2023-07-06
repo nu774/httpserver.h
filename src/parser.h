@@ -14,4 +14,6 @@ struct hsh_token_s hsh_parser_exec(struct hsh_parser_s *parser,
                                    int max_buf_capacity);
 void hsh_parser_init(struct hsh_parser_s *parser);
 
+int hsh_parser_done(struct hsh_parser_s *parser);
+
 #endif

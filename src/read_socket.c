@@ -10,6 +10,8 @@
 #include "request_util.h"
 #include "io_events.h"
 #include "respond.h"
+#include "buffer_util.h"
+#include "connection.h"
 #endif
 
 void _hs_token_array_push(struct hs_token_array_s *array,
@@ -80,6 +82,20 @@ _hs_parse_buffer_and_exec_user_cb(http_request_t *request,
     struct hsh_token_s token = hsh_parser_exec(
         &request->parser, &request->buffer, 0);
 
+    if (HTTP_FLAG_CHECK(request->flags, HTTP_DISCARD_REMAINING_BODY)) {
+      if (token.type == HSH_TOK_ERR) {
+        hs_request_terminate_connection(request);
+      } else if (token.type == HSH_TOK_BODY && HTTP_FLAG_CHECK(token.flags, HSH_TOK_FLAG_BODY_FINAL)) {
+        HTTP_FLAG_CLEAR(request->flags, HTTP_DISCARD_REMAINING_BODY);
+        _hs_buffer_discard_until(&request->buffer, request->buffer.index);
+        request->tokens.size = 0;
+        hsh_parser_init(&request->parser);
+        if (request->buffer.length > 0) {
+          continue;
+        }
+      }
+      return rc;
+    }
     switch (token.type) {
     case HSH_TOK_HEADERS_DONE:
       _hs_token_array_push(&request->tokens, token);
