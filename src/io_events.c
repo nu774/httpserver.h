@@ -28,8 +28,13 @@ void _hs_read_socket_and_handle_return_code(http_request_t *request) {
   enum hs_read_rc_e rc = hs_read_request_and_exec_user_cb(request, opts);
   switch (rc) {
   case HS_READ_RC_PARSE_ERR:
-    hs_request_respond_error(request, 400, "Bad Request",
-                             hs_request_begin_write);
+    if (HTTP_FLAG_CHECK(request->flags, HTTP_CHUNKED_RESPONSE)) {
+      hs_request_terminate_connection(request);
+    } else {
+      hs_request_set_keep_alive_flag(request, HTTP_CLOSE);
+      hs_request_respond_error(request, 400, "Bad Request",
+                              hs_request_begin_write);
+    }
     break;
   case HS_READ_RC_SOCKET_ERR:
     hs_request_terminate_connection(request);
@@ -77,6 +82,7 @@ void _hs_accept_and_begin_request_cycle(http_server_t *server,
   while ((request = hs_server_accept_connection(server, on_client_connection_cb,
                                                 on_timer_event_cb))) {
     if (server->memused > HTTP_MAX_TOTAL_EST_MEM_USAGE) {
+      hs_request_set_keep_alive_flag(request, HTTP_CLOSE);
       hs_request_respond_error(request, 503, "Service Unavailable",
                                hs_request_begin_write);
     } else {
