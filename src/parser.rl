@@ -175,6 +175,9 @@
 
   action error {
     // parser->rc = (int8_t)HSH_PARSER_ERR;
+    parser->token.type = HSH_TOK_ERR;
+    parser->token.len = 0;
+    HTTP_FLAG_SET(parser->flags, HSH_P_FLAG_TOKEN_READY);
     fbreak;
   }
 
