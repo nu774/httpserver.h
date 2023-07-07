@@ -216,11 +216,13 @@
 
   headers = ( header+ >reset_count @inc_count )? crlf  @done_headers;
 
+  chunk_ext = ( [ \t]* ';' ^[\r\n]* )?;
+
   chunk = (
-    ( ^[0] xdigit* ) >chunk_start $chunk_size crlf any+ >body $chunk_read
+    ( ^[0] xdigit* ) >chunk_start $chunk_size chunk_ext crlf any+ >body $chunk_read
   );
 
-  zero_chunk = '0' crlf @end_stream;
+  zero_chunk = '0'+ chunk_ext crlf ([^\r\n]+ crlf)* crlf @end_stream;
 
   chunk_end := ( crlf ( chunk | zero_chunk ) ) $!error;
 
