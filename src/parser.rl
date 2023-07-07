@@ -71,6 +71,7 @@
       fbreak;
     } else if (parser->content_length == 0) {
       HTTP_FLAG_SET(parser->token.flags, HSH_TOK_FLAG_NO_BODY);
+      HTTP_FLAG_SET(parser->flags, HSH_P_FLAG_DONE);
       fbreak;
     // The body won't fit into the buffer at maximum capacity.
     } else if (parser->content_length > max_buf_capacity - buffer->after_headers_index) {
@@ -244,8 +245,18 @@ void hsh_parser_init(struct hsh_parser_s* parser) {
 struct hsh_token_s hsh_parser_exec(struct hsh_parser_s* parser, struct hsh_buffer_s* buffer, int max_buf_capacity) {
   struct hsh_token_s none = {};
   none.type = HSH_TOK_NONE;
-  if (HTTP_FLAG_CHECK(parser->flags, HSH_P_FLAG_DONE) || parser->sequence_id == buffer->sequence_id) {
+  if (parser->sequence_id == buffer->sequence_id) {
     return none;
+  }
+  if (HTTP_FLAG_CHECK(parser->flags, HSH_P_FLAG_DONE)) {
+    if (parser->token.type == HSH_TOK_BODY && HTTP_FLAG_CHECK(parser->token.flags, HSH_TOK_FLAG_BODY_FINAL)) {
+      return none;
+    }
+    parser->token.type = HSH_TOK_BODY;
+    parser->token.index = 0;
+    parser->token.len = 0;
+    HTTP_FLAG_SET(parser->token.flags, HSH_TOK_FLAG_BODY_FINAL);
+    return parser->token;
   }
   int cs = parser->state;
   char* eof = NULL;
