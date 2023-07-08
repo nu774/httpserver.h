@@ -68,6 +68,8 @@ void _hs_add_timer_event(http_request_t *request, hs_io_cb_t timer_cb) {
 #endif
 
 void hs_request_terminate_connection(http_request_t *request) {
+  if (request->end_cb)
+    request->end_cb(request);
   _hs_delete_events(request);
   close(request->socket);
   _hs_buffer_free(&request->buffer, &request->server->memused);

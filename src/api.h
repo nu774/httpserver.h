@@ -290,6 +290,15 @@ void http_request_set_userdata(struct http_request_s *request, void *data);
 void *http_request_userdata(struct http_request_s *request);
 
 /**
+ * Stores an arbitrary callback that will fire when request is finished
+ *
+ * @param request The request.
+ * @param cb The callback.
+ */
+void http_request_set_end_callback(struct http_request_s *request,
+                                   void (*cb)(struct http_request_s *request));
+
+/**
  * Stores a server wide opaque pointer for future retrieval.
  *
  * This is not used by the library in any way and is strictly for you, the

@@ -35,6 +35,11 @@ void http_request_set_userdata(http_request_t *request, void *data) {
   request->data = data;
 }
 
+void http_request_set_end_callback(http_request_t *request,
+                                   void (*cb)(http_request_t *)) {
+  request->end_cb = cb;
+}
+
 void http_server_set_userdata(struct http_server_s *serv, void *data) {
   serv->data = data;
 }

@@ -63,6 +63,8 @@ void _hs_write_socket_and_handle_return_code(http_request_t *request) {
     break;
   case HS_WRITE_RC_SUCCESS:
     // Response complete, keep-alive connection
+    if (request->end_cb)
+      request->end_cb(request);
     hs_request_begin_read(request);
     break;
   case HS_WRITE_RC_SUCCESS_CHUNK:

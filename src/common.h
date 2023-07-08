@@ -94,6 +94,7 @@ typedef struct http_request_s {
   int timerfd;
 #endif
   void (*chunk_cb)(struct http_request_s *);
+  void (*end_cb)(struct http_request_s *);
   void *data;
   struct hsh_buffer_s buffer;
   struct hsh_parser_s parser;
