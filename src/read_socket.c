@@ -97,7 +97,10 @@ _hs_parse_buffer_and_exec_user_cb(http_request_t *request,
       }
       break;
     case HSH_TOK_BODY:
-      _hs_token_array_push(&request->tokens, token);
+      if (request->tokens.buf[request->tokens.size - 1].type == HSH_TOK_BODY)
+        request->tokens.buf[request->tokens.size - 1] = token;
+      else
+        _hs_token_array_push(&request->tokens, token);
       if (HTTP_FLAG_CHECK(token.flags, HSH_TOK_FLAG_SMALL_BODY)) {
         _hs_exec_callback(request, request->server->request_handler);
       } else {
