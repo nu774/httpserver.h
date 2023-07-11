@@ -213,7 +213,7 @@
 
   header = content_length | transfer_encoding | generic_header;
 
-  headers = ( header+ >reset_count @inc_count crlf ) @done_headers;
+  headers = ( header+ >reset_count @inc_count )? crlf  @done_headers;
 
   chunk = (
     ( ^[0] xdigit* ) >chunk_start $chunk_size crlf any+ >body $chunk_read
