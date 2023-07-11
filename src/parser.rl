@@ -107,25 +107,15 @@
   }
 
   action chunk_read {
-    char* last_body_byte = buffer->buf + parser->token.index + parser->content_length - 1;
-    if (pe >= last_body_byte) {
-      p = last_body_byte;
+    if (pe - p >= parser->content_length) {
       parser->token.len = parser->content_length;
       HTTP_FLAG_SET(parser->flags, HSH_P_FLAG_TOKEN_READY);
+      p = p + parser->token.len - 1;
       fnext chunk_end;
-      fbreak;
-    // The current chunk is at the end of the buffer and the buffer cannot be expanded.
-    // Move the remaining contents of the buffer to just after the headers to free up
-    // capacity in the buffer.
-    } else if (p - buffer->buf + parser->content_length > max_buf_capacity) {
-      memcpy(buffer->buf + buffer->after_headers_index, p, pe - p);
-      buffer->length = buffer->after_headers_index + pe - p;
-      p = buffer->buf + buffer->after_headers_index;
-      parser->token.index = buffer->after_headers_index;
-      parser->sequence_id = buffer->sequence_id;
-      fhold;
-      fbreak;
+    } else {
+      p--;
     }
+    fbreak;
   }
 
   action end_stream {
@@ -140,37 +130,32 @@
   }
 
   action small_body_read {
-    parser->token.index = buffer->after_headers_index;
-    parser->token.len = parser->content_length;
-    HTTP_FLAG_SET(parser->token.flags, HSH_TOK_FLAG_SMALL_BODY);
-    char* last_body_byte = buffer->buf + parser->token.index + parser->content_length - 1;
-    if (pe >= last_body_byte) {
-      HTTP_FLAG_SET(parser->flags, HSH_P_FLAG_TOKEN_READY);
+    if (pe - p >= parser->content_remaining) {
+      parser->token.index = p - buffer->buf;
+      parser->token.len = parser->content_remaining;
+      parser->token.flags = HSH_TOK_FLAG_BODY_FINAL;
+      parser->content_remaining = 0;
       HTTP_FLAG_SET(parser->flags, HSH_P_FLAG_DONE);
+      HTTP_FLAG_SET(parser->flags, HSH_P_FLAG_TOKEN_READY);
+      HTTP_FLAG_SET(parser->token.flags, HSH_TOK_FLAG_SMALL_BODY);
+      p = p + parser->token.len - 1;
+    } else {
+      p--;
     }
-    p = pe;
-    fhold;
     fbreak;
   }
 
   action large_body_read {
-    parser->token.index = buffer->after_headers_index;
-    char* last_body_byte = buffer->buf + buffer->after_headers_index + parser->content_remaining - 1;
-    if (pe >= last_body_byte) {
-      parser->token.flags = HSH_TOK_FLAG_BODY_FINAL;
+    parser->token.index = p - buffer->buf;
+    parser->token.len = pe - p;
+    if (parser->token.len >= parser->content_remaining) {
       parser->token.len = parser->content_remaining;
-      parser->content_remaining = 0;
-      HTTP_FLAG_SET(parser->flags, HSH_P_FLAG_TOKEN_READY);
+      parser->token.flags = HSH_TOK_FLAG_BODY_FINAL;
       HTTP_FLAG_SET(parser->flags, HSH_P_FLAG_DONE);
-    } else {
-      parser->token.len = pe - p;
-      parser->content_remaining -= parser->token.len;
-      HTTP_FLAG_SET(parser->flags, HSH_P_FLAG_TOKEN_READY);
-      p = buffer->buf + buffer->after_headers_index;
-      buffer->length = buffer->after_headers_index;
-      parser->sequence_id = buffer->sequence_id;
     }
-    fhold;
+    parser->content_remaining -= parser->token.len;
+    HTTP_FLAG_SET(parser->flags, HSH_P_FLAG_TOKEN_READY);
+    p = p + parser->token.len - 1;
     fbreak;
   }
 
@@ -219,7 +204,7 @@
   chunk_ext = ( [ \t]* ';' ^[\r\n]* )?;
 
   chunk = (
-    ( ^[0] xdigit* ) >chunk_start $chunk_size chunk_ext crlf any+ >body $chunk_read
+    ( [1-9A-Fa-f] xdigit* ) >chunk_start $chunk_size chunk_ext crlf any+ >body $chunk_read
   );
 
   zero_chunk = '0'+ chunk_ext crlf ([^\r\n]+ crlf)* crlf @end_stream;
