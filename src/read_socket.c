@@ -168,14 +168,12 @@ enum hs_read_rc_e hs_read_request_and_exec_user_cb(http_request_t *request,
     hsh_parser_init(&request->parser);
   }
 
-  if (_hs_buffer_requires_read(&request->buffer)) {
-    int bytes = _hs_read_into_buffer(&request->buffer, request->socket,
-                                     &request->server->memused,
-                                     opts.max_request_buf_capacity);
+  int bytes = _hs_read_into_buffer(&request->buffer, request->socket,
+                                    &request->server->memused,
+                                    opts.max_request_buf_capacity);
 
-    if (bytes == opts.eof_rc) {
-      return HS_READ_RC_SOCKET_ERR;
-    }
+  if (bytes == opts.eof_rc) {
+    return HS_READ_RC_SOCKET_ERR;
   }
 
   return _hs_parse_buffer_and_exec_user_cb(request,
