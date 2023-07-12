@@ -14,8 +14,8 @@ run_functional_tests() {
   curl http://localhost:8080/host
 
   echo "\n\nRequest Body larger than max in mem size:"
-  dd if=/dev/urandom of=test.dat bs=25165824 count=1 2> /dev/null
-  curl -H'Expect:' --data-binary @test.dat -o r1.dat http://localhost:8080/large
+  dd if=/dev/urandom of=test1.dat bs=25165824 count=1 2> /dev/null
+  curl -H'Expect:' --data-binary @test1.dat -o r1.dat http://localhost:8080/large
   diff r1.dat test.dat
 
   echo "\n\nChunked Response:"
@@ -28,15 +28,15 @@ run_functional_tests() {
   curl -H'Connection: close' http://localhost:8080/chunked http://localhost:8080/chunked
 
   echo "\n\nChunked Request keep-alive: (expect empty)"
-  dd if=/dev/urandom of=test.dat bs=262144 count=1 2> /dev/null
-  curl -H'Expect:' -H'Transfer-Encoding: chunked' -XPOST --data-binary @test.dat -o r1.dat http://localhost:8080/chunked-req -o r2.dat http://localhost:8080/chunked-req
-  diff r1.dat test.dat
-  diff r2.dat test.dat
+  dd if=/dev/urandom of=test2.dat bs=262144 count=1 2> /dev/null
+  curl -H'Expect:' -H'Transfer-Encoding: chunked' -XPOST --data-binary @test2.dat -o r2.dat http://localhost:8080/chunked-req -o r3.dat http://localhost:8080/chunked-req
+  diff r2.dat test2.dat
+  diff r3.dat test2.dat
 
   echo "\n\nChunked Request close: (expect empty)"
-  curl -H'Expect:' -H'Transfer-Encoding: chunked' -XPOST --data-binary @test.dat -o r3.dat http://localhost:8080/chunked-req -o r4.dat http://localhost:8080/chunked-req
-  diff r3.dat test.dat
-  diff r4.dat test.dat
+  curl -H'Expect:' -H'Transfer-Encoding: chunked' -XPOST --data-binary @test2.dat -o r4.dat http://localhost:8080/chunked-req -o r5.dat http://localhost:8080/chunked-req
+  diff r4.dat test2.dat
+  diff r5.dat test2.dat
 
   echo "\n\nPoll Server:"
   curl http://localhost:8081/ &
@@ -61,8 +61,8 @@ run_functional_tests() {
   cat connection-close.bench 1>&2
 
   echo "\nStress Test large body:"
-  dd if=/dev/urandom of=test.dat bs=7388608 count=1 2> /dev/null
-  ab -c 2 -n 10 -p test.dat http://127.0.0.1:8080/echo > large-file.bench
+  dd if=/dev/urandom of=test3.dat bs=7388608 count=1 2> /dev/null
+  ab -c 2 -n 10 -p test3.dat http://127.0.0.1:8080/echo > large-file.bench
   cat large-file.bench | grep Complete
   cat large-file.bench | grep Non-2xx
   cat large-file.bench 1>&2
