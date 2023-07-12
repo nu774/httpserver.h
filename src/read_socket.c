@@ -85,13 +85,18 @@ _hs_parse_buffer_and_exec_user_cb(http_request_t *request,
     if (HTTP_FLAG_CHECK(request->flags, HTTP_DISCARD_REMAINING_BODY)) {
       if (token.type == HSH_TOK_ERR) {
         hs_request_terminate_connection(request);
-      } else if (token.type == HSH_TOK_BODY && HTTP_FLAG_CHECK(token.flags, HSH_TOK_FLAG_BODY_FINAL)) {
-        HTTP_FLAG_CLEAR(request->flags, HTTP_DISCARD_REMAINING_BODY);
-        _hs_buffer_discard_until(&request->buffer, request->buffer.index);
-        request->tokens.size = 0;
-        hsh_parser_init(&request->parser);
-        if (request->buffer.length > 0) {
-          continue;
+      } else if (token.type == HSH_TOK_BODY) {
+        if (request->buffer.index == request->buffer.length) {
+          request->buffer.index = request->buffer.length = request->buffer.after_headers_index;
+        }
+        if (HTTP_FLAG_CHECK(token.flags, HSH_TOK_FLAG_BODY_FINAL)) {
+          HTTP_FLAG_CLEAR(request->flags, HTTP_DISCARD_REMAINING_BODY);
+          _hs_buffer_discard_until(&request->buffer, request->buffer.index);
+          request->tokens.size = 0;
+          hsh_parser_init(&request->parser);
+          if (request->buffer.length > 0) {
+            continue;
+          }
         }
       }
       return rc;
@@ -136,6 +141,9 @@ _hs_parse_buffer_and_exec_user_cb(http_request_t *request,
         } else {
           _hs_exec_callback(request, request->chunk_cb);
         }
+      }
+      if (request->buffer.index == request->buffer.length) {
+        request->buffer.length = request->buffer.index = request->buffer.after_headers_index;
       }
       return rc;
     case HSH_TOK_ERR:
