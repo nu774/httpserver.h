@@ -26,7 +26,7 @@ enum hs_write_rc_e hs_write_socket(http_request_t *request) {
 
   enum hs_write_rc_e rc = HS_WRITE_RC_SUCCESS;
 
-  if (errno == EPIPE) {
+  if (bytes < 0) {
     rc = HS_WRITE_RC_SOCKET_ERR;
   } else {
     if (request->bytes_written != request->obuffer.length) {
