@@ -180,7 +180,7 @@ void _hs_add_write_event(http_request_t *request) {
   kevent(request->server->loop, ev_set, 2, NULL, 0, NULL);
 #else
   struct epoll_event ev;
-  ev.events = EPOLLOUT | EPOLLET;
+  ev.events = EPOLLOUT;
   ev.data.ptr = request;
   epoll_ctl(request->server->loop, EPOLL_CTL_MOD, request->socket, &ev);
 #endif
@@ -202,7 +202,7 @@ void _hs_add_read_event(http_request_t *request) {
   kevent(request->server->loop, &ev_set, 1, NULL, 0, NULL);
 #else
   struct epoll_event ev;
-  ev.events = EPOLLIN | EPOLLET;
+  ev.events = EPOLLIN;
   ev.data.ptr = request;
   epoll_ctl(request->server->loop, EPOLL_CTL_MOD, request->socket, &ev);
 #endif
@@ -211,5 +211,7 @@ void _hs_add_read_event(http_request_t *request) {
 void hs_request_begin_read(http_request_t *request) {
   request->state = HTTP_SESSION_READ;
   _hs_add_read_event(request);
-  _hs_read_socket_and_handle_return_code(request);
+  if (request->buffer.index < request->buffer.length) {
+    _hs_read_socket_and_handle_return_code(request);
+  }
 }

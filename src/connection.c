@@ -48,7 +48,7 @@ void _hs_add_timer_event(http_request_t *request, hs_io_cb_t timer_cb) {
 
   // Watch for read events
   struct epoll_event ev;
-  ev.events = EPOLLIN | EPOLLET;
+  ev.events = EPOLLIN;
   ev.data.ptr = request;
   epoll_ctl(request->server->loop, EPOLL_CTL_ADD, request->socket, &ev);
 

@@ -99,7 +99,7 @@ void _hs_server_init_events(http_server_t *serv, hs_evt_cb_t timer_cb) {
 
 void _hs_add_server_sock_events(http_server_t *serv) {
   struct epoll_event ev;
-  ev.events = EPOLLIN | EPOLLET;
+  ev.events = EPOLLIN;
   ev.data.ptr = serv;
   epoll_ctl(serv->loop, EPOLL_CTL_ADD, serv->socket, &ev);
 }

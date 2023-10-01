@@ -2,7 +2,7 @@
 #define HS_IO_EVENTS_H
 
 #define HTTP_REQUEST_BUF_SIZE 1024
-#define HTTP_MAX_REQUEST_BUF_SIZE 8388608       // 8mb
+#define HTTP_MAX_REQUEST_BUF_SIZE 8192       // 8mb
 #define HTTP_MAX_TOTAL_EST_MEM_USAGE 4294967296 // 4gb
 
 struct http_request_s;
