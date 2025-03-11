@@ -127,7 +127,7 @@ _hs_parse_buffer_and_exec_user_cb(http_request_t *request,
       } else {
         if (HTTP_FLAG_CHECK(token.flags, HSH_TOK_FLAG_BODY_FINAL) &&
             token.len > 0) {
-          _hs_exec_callback(request, request->chunk_cb);
+          if (request->chunk_cb) _hs_exec_callback(request, request->chunk_cb);
 
           // A zero length body is used to indicate to the user code that the
           // body has finished streaming. This is natural when dealing with
@@ -137,9 +137,9 @@ _hs_parse_buffer_and_exec_user_cb(http_request_t *request,
           memset(&token, 0, sizeof(struct hsh_token_s));
           token.type = HSH_TOK_BODY;
           _hs_token_array_push(&request->tokens, token);
-          _hs_exec_callback(request, request->chunk_cb);
+          if (request->chunk_cb) _hs_exec_callback(request, request->chunk_cb);
         } else {
-          _hs_exec_callback(request, request->chunk_cb);
+          if (request->chunk_cb) _hs_exec_callback(request, request->chunk_cb);
         }
       }
       if (request->buffer.index == request->buffer.length) {
