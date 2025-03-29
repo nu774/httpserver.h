@@ -190,7 +190,9 @@ void _hs_add_write_event(http_request_t *request) {
 void hs_request_begin_write(http_request_t *request) {
   request->state = HTTP_SESSION_WRITE;
   _hs_add_write_event(request);
-  _hs_write_socket_and_handle_return_code(request);
+  if (!HTTP_FLAG_CHECK(request->flags, HTTP_CHUNKED_RESPONSE)) {
+    _hs_write_socket_and_handle_return_code(request);
+  }
 }
 
 void _hs_add_read_event(http_request_t *request) {
