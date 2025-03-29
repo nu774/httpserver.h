@@ -69,6 +69,7 @@ void _hs_write_socket_and_handle_return_code(http_request_t *request) {
       request->end_cb(request);
     if (hsh_parser_done(&request->parser)) {
       _hs_buffer_free(&request->buffer, &request->server->memused);
+      request->tokens.size = 0;
       hs_request_begin_read(request);
     } else {
       HTTP_FLAG_SET(request->flags, HTTP_DISCARD_REMAINING_BODY);
