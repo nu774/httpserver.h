@@ -4,6 +4,7 @@
 #include <unistd.h>
 
 #ifndef HTTPSERVER_IMPL
+#include "api.h"
 #include "common.h"
 #include "parser.h"
 #include "read_socket.h"

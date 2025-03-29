@@ -9,11 +9,6 @@
 #define HTTP_1_0 0
 #define HTTP_1_1 1
 
-struct http_string_s {
-  char const *buf;
-  int len;
-};
-
 typedef struct http_string_s http_string_t;
 
 http_string_t hs_get_token_string(http_request_t *request,

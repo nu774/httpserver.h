@@ -92,7 +92,10 @@ extern "C" {
 
 // String type used to read the request details. The char pointer is NOT null
 // terminated.
-struct http_string_s;
+struct http_string_s {
+  char const *buf;
+  int len;
+};
 
 struct http_server_s;
 struct http_request_s;

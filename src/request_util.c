@@ -2,6 +2,7 @@
 #include <string.h>
 
 #ifndef HTTPSERVER_IMPL
+#include "api.h"
 #include "common.h"
 #include "request_util.h"
 #endif
