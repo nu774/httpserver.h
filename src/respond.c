@@ -158,11 +158,27 @@ void _http_perform_response(http_request_t *request, http_response_t *response,
     header = tmp->next;
     free(tmp);
   }
-  _hs_buffer_free(&request->obuffer, &request->server->memused);
   free(response);
-  request->obuffer.buf = printctx->buf;
-  request->obuffer.length = printctx->size;
-  request->obuffer.capacity = printctx->capacity;
+  if (request->obuffer.length == 0) {
+    _hs_buffer_free(&request->obuffer, &request->server->memused);
+    request->obuffer.buf = printctx->buf;
+    request->obuffer.length = printctx->size;
+    request->obuffer.capacity = printctx->capacity;
+  } else if (request->obuffer.length + printctx->size < request->obuffer.capacity) {
+    memcpy(request->obuffer.buf + request->obuffer.length, printctx->buf, printctx->size);
+    request->obuffer.length += printctx->size;
+    free(printctx->buf);
+  } else {
+    int capacity = request->obuffer.capacity;
+    while (capacity < request->obuffer.length + printctx->size)
+      capacity *= 2;
+    request->obuffer.buf = realloc(request->obuffer.buf, capacity);
+    request->server->memused += (capacity - request->obuffer.capacity);
+    memcpy(request->obuffer.buf + request->obuffer.length, printctx->buf, printctx->size);
+    request->obuffer.length += printctx->size;
+    request->obuffer.capacity = capacity;
+    free(printctx->buf);
+  }
   request->bytes_written = 0;
   request->state = HTTP_SESSION_WRITE;
   http_write(request);
