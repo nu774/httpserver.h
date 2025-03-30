@@ -14,6 +14,8 @@ static inline void _hs_buffer_free(struct hsh_buffer_s *buffer,
     free(buffer->buf);
     *memused -= buffer->capacity;
     buffer->buf = NULL;
+    buffer->length = 0;
+    buffer->capacity = 0;
   }
 }
 
